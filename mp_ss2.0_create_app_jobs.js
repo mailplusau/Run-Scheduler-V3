@@ -63,7 +63,6 @@ define(['SuiteScripts/jQuery Plugins/Moment JS/moment.min', 'N/task', 'N/email',
 
         var netsuiteDateFormat = dateSelected2Date(year + '-' + setMonth + '-' + date);
 
-
         log.debug({
             title: 'netsuiteDateFormat',
             details: netsuiteDateFormat
@@ -301,9 +300,11 @@ define(['SuiteScripts/jQuery Plugins/Moment JS/moment.min', 'N/task', 'N/email',
                 })
 
                 if (isNullorEmpty(old_service_id)) {
+                    //Create App Job Group
                     app_job_group_id2 = createAppJobGroup(appServiceStopStopName,
                         appServiceStopCustomer, appServiceStopFranchisee, appServiceStopService);
 
+                    //Create App Jobs
                     createAppJobs(appServiceStopCustomer, appServiceStopStopName,
                         appServiceStopService,
                         appServiceStopStopTimes,
@@ -317,6 +318,7 @@ define(['SuiteScripts/jQuery Plugins/Moment JS/moment.min', 'N/task', 'N/email',
 
                 } else if (old_service_id == appServiceStopService) {
 
+                    //Create App Jobs
                     createAppJobs(appServiceStopCustomer, appServiceStopStopName,
                         appServiceStopService,
                         appServiceStopStopTimes,
@@ -329,9 +331,21 @@ define(['SuiteScripts/jQuery Plugins/Moment JS/moment.min', 'N/task', 'N/email',
                         service_leg_addr_lon, appServiceStopFranchisee, appServiceStopNotes, appServiceStopRunPlan, appServiceStopAddressType, appServiceStopFreq, appServiceStopCustomerText);
 
                 } else if (old_service_id != appServiceStopService) {
+                    reschedule = task.create({
+                        taskType: task.TaskType.SCHEDULED_SCRIPT,
+                        scriptId: 'customscript_ss2_create_app_jobs',
+                        deploymentId: 'customdeploy1',
+                        params: params
+                    });
+
+                    log.audit({
+                        title: 'Reschedule Return - IN LOOP'
+                    });
+                    var rescheduled = reschedule.submit();
 
                 }
 
+                //Mark "App Job Created" in the App Service Stop as true
                 var serviceStopRecord = record.load({
                     type: 'customrecord_service_stop',
                     id: appServiceStopInternalId,
@@ -553,15 +567,6 @@ define(['SuiteScripts/jQuery Plugins/Moment JS/moment.min', 'N/task', 'N/email',
                 value: convertTo12HourFormat(serviceTime[0])
             });
 
-            // app_job_rec.setValue({
-            //     fieldId: 'custrecord_job_time_scheduled_after',
-            //     value: serviceTime + 1
-            // });
-
-            // app_job_rec.setValue({
-            //     fieldId: 'custrecord_job_time_scheduled_before',
-            //     value: serviceTime - 1
-            // });
             app_job_rec.setValue({
                 fieldId: 'custrecord_job_date_scheduled',
                 value: netsuiteDateFormat
@@ -589,6 +594,13 @@ define(['SuiteScripts/jQuery Plugins/Moment JS/moment.min', 'N/task', 'N/email',
                 '0');
         }
 
+        /**
+         * @description
+         * @author Ankith Ravindran (AR)
+         * @date 02/05/2024
+         * @param {*} time24
+         * @returns {*} 
+         */
         function convertTo12HourFormat(time24) {
 
             var d = new Date();
@@ -599,6 +611,13 @@ define(['SuiteScripts/jQuery Plugins/Moment JS/moment.min', 'N/task', 'N/email',
             return d;
         }
 
+        /**
+         * @description
+         * @author Ankith Ravindran (AR)
+         * @date 02/05/2024
+         * @param {*} date_selected
+         * @returns {*} 
+         */
         function dateSelected2Date(date_selected) {
             // date_selected = "2020-06-04"
             var date_array = date_selected.split('-');
