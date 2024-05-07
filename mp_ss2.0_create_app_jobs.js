@@ -21,6 +21,11 @@ define(['SuiteScripts/jQuery Plugins/Moment JS/moment.min', 'N/task', 'N/email',
             baseURL = 'https://1048144-sb3.app.netsuite.com';
         }
 
+        log.debug({
+            title: 'todays date',
+            details: moment.utc()
+        })
+
         var day = moment.utc().day(); //Get the day of the week
         var date = moment.utc().add(1, 'days').date(); //Get tomorrows date
         var month = moment.utc().month(); //Get current month
@@ -334,14 +339,19 @@ define(['SuiteScripts/jQuery Plugins/Moment JS/moment.min', 'N/task', 'N/email',
                     reschedule = task.create({
                         taskType: task.TaskType.SCHEDULED_SCRIPT,
                         scriptId: 'customscript_ss2_create_app_jobs',
-                        deploymentId: 'customdeploy1',
-                        params: params
+                        deploymentId: 'customdeploy2',
+                        params: null
                     });
 
                     log.audit({
                         title: 'Reschedule Return - IN LOOP'
                     });
                     var rescheduled = reschedule.submit();
+
+                    log.audit({
+                        title: 'rescheduled',
+                        value: rescheduled
+                    });
 
                 }
 
