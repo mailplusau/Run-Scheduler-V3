@@ -146,6 +146,9 @@ define(['SuiteScripts/jQuery Plugins/Moment JS/moment.min', 'N/task', 'N/email',
                 var appServiceStopService = result.getValue({
                     name: 'custrecord_1288_service'
                 });
+                var appServiceStopServiceText = result.getText({
+                    name: 'custrecord_1288_service'
+                });
                 var appServiceStopOperator = result.getValue({
                     name: 'custrecord_1288_operator'
                 });
@@ -167,6 +170,11 @@ define(['SuiteScripts/jQuery Plugins/Moment JS/moment.min', 'N/task', 'N/email',
                 var appServicePostalLocation = result.getValue({
                     name: 'custrecord_1288_postal_location'
                 });
+
+                log.debug({
+                    title: 'appServiceStopInternalId',
+                    details: appServiceStopInternalId
+                })
 
                 log.debug({
                     title: 'appServiceStopStopName',
@@ -279,34 +287,42 @@ define(['SuiteScripts/jQuery Plugins/Moment JS/moment.min', 'N/task', 'N/email',
                     });
                 }
 
-                log.debug({
-                    title: 'service_leg_addr_st_num',
-                    details: service_leg_addr_st_num
-                })
-                log.debug({
-                    title: 'service_leg_addr_suburb',
-                    details: service_leg_addr_suburb
-                })
-                log.debug({
-                    title: 'service_leg_addr_state',
-                    details: service_leg_addr_state
-                })
-                log.debug({
-                    title: 'service_leg_addr_postcode',
-                    details: service_leg_addr_postcode
-                })
-                log.debug({
-                    title: 'service_leg_addr_lat',
-                    details: service_leg_addr_lat
-                })
-                log.debug({
-                    title: 'service_leg_addr_lon',
-                    details: service_leg_addr_lon
-                })
+                // log.debug({
+                //     title: 'service_leg_addr_st_num',
+                //     details: service_leg_addr_st_num
+                // })
+                // log.debug({
+                //     title: 'service_leg_addr_suburb',
+                //     details: service_leg_addr_suburb
+                // })
+                // log.debug({
+                //     title: 'service_leg_addr_state',
+                //     details: service_leg_addr_state
+                // })
+                // log.debug({
+                //     title: 'service_leg_addr_postcode',
+                //     details: service_leg_addr_postcode
+                // })
+                // log.debug({
+                //     title: 'service_leg_addr_lat',
+                //     details: service_leg_addr_lat
+                // })
+                // log.debug({
+                //     title: 'service_leg_addr_lon',
+                //     details: service_leg_addr_lon
+                // })
+
+                log.audit({
+                    title: 'Main Loop App Job Group Id'
+                });
+                log.audit({
+                    title: 'app_job_group_id2',
+                    details: app_job_group_id2
+                });
 
                 if (isNullorEmpty(old_service_id)) {
                     //Create App Job Group
-                    app_job_group_id2 = createAppJobGroup(appServiceStopStopName,
+                    app_job_group_id2 = createAppJobGroup(appServiceStopServiceText,
                         appServiceStopCustomer, appServiceStopFranchisee, appServiceStopService);
 
                     //Create App Jobs
@@ -320,8 +336,25 @@ define(['SuiteScripts/jQuery Plugins/Moment JS/moment.min', 'N/task', 'N/email',
                         service_leg_addr_postcode,
                         service_leg_addr_lat,
                         service_leg_addr_lon, appServiceStopFranchisee, appServiceStopNotes, appServiceStopRunPlan, appServiceStopAddressType, appServiceStopFreq, appServiceStopCustomerText);
+                    
+                    
+                        log.audit({
+                            title: 'Inside Null Old Service Id'
+                        });
+                        log.audit({
+                            title: 'app_job_group_id2',
+                            details: app_job_group_id2
+                        });
 
                 } else if (old_service_id == appServiceStopService) {
+
+                    log.audit({
+                        title: 'Inside Mathcing Old Service Id with App Service Stop Service ID'
+                    });
+                    log.audit({
+                        title: 'app_job_group_id2',
+                        details: app_job_group_id2
+                    });
 
                     //Create App Jobs
                     createAppJobs(appServiceStopCustomer, appServiceStopStopName,
@@ -353,7 +386,17 @@ define(['SuiteScripts/jQuery Plugins/Moment JS/moment.min', 'N/task', 'N/email',
                         value: rescheduled
                     });
 
+                    return false;
+
                 }
+
+                log.audit({
+                    title: 'Updating the App Service Stop',
+                })
+                log.audit({
+                    title: 'appServiceStopInternalId',
+                    details: appServiceStopInternalId
+                })
 
                 //Mark "App Job Created" in the App Service Stop as true
                 var serviceStopRecord = record.load({
