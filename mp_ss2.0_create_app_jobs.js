@@ -129,6 +129,7 @@ define([
 	function execute(context) {
 		var old_service_id;
 		var app_job_group_id2;
+		var app_job_group_name;
 
 		var count = 0;
 		var exit = false;
@@ -358,7 +359,8 @@ define([
 					appServiceStopRunPlan,
 					appServiceStopAddressType,
 					appServiceStopFreq,
-					appServiceStopCustomerText
+					appServiceStopCustomerText,
+					app_job_group_name
 				);
 
 				log.audit({
@@ -396,7 +398,8 @@ define([
 					appServiceStopRunPlan,
 					appServiceStopAddressType,
 					appServiceStopFreq,
-					appServiceStopCustomerText
+					appServiceStopCustomerText,
+					app_job_group_name
 				);
 			} else if (old_service_id != appServiceStopService) {
 				reschedule = task.create({
@@ -471,6 +474,7 @@ define([
 			fieldId: "name",
 			value: service_leg_service_text + "_" + date_of_week,
 		});
+		app_job_group_name = service_leg_service_text + "_" + date_of_week;
 		app_job_group_rec.setValue({
 			fieldId: "custrecord_jobgroup_ref",
 			value: service_leg_service_text + "_" + date_of_week,
@@ -535,7 +539,8 @@ define([
 		appServiceStopRunPlan,
 		appServiceStopAddressType,
 		appServiceStopFreq,
-		appServiceStopCustomerText
+		appServiceStopCustomerText,
+		app_job_group_name
 	) {
 		var app_job_rec = record.create({
 			type: "customrecord_job",
@@ -646,23 +651,23 @@ define([
 			value: appServiceStopRunPlan,
 		});
 
-		var app_job_location_type = "";
+		var app_job_location_type_name = "";
 		if (appServiceStopAddressType == 3) {
 			app_job_rec.setValue({
 				fieldId: "custrecord_app_job_location_type",
 				value: 2,
 			});
-			app_job_location_type = "Non-Customer";
+			app_job_location_type_name = "Non-Customer";
 		} else {
 			app_job_rec.setValue({
 				fieldId: "custrecord_app_job_location_type",
 				value: 1,
 			});
-			app_job_location_type = "Customer";
+			app_job_location_type_name = "Customer";
 		}
 
 		//08:50|300000,08:50|300000,08:50|300000,08:50|300000,08:50|300000,08:50|300000
-		var stopTimesArray = appServiceStopStopTimes.split(",");
+		// var stopTimesArray = appServiceStopStopTimes.split(",");
 		var serviceTime = stopTimesArray[day].split("|");
 
 		app_job_rec.setValue({
@@ -680,6 +685,7 @@ define([
 		});
 
 		var app_job_id = app_job_rec.save();
+		
 
 		var apiBody = '{"jobs": [{';
 		apiBody += '"ns_id": "' + app_job_id + '",';
@@ -688,10 +694,9 @@ define([
 		apiBody +=
 			'"time_scheduled": "' + convertTo12HourFormat(serviceTime[0]) + '",';
 		apiBody +=
-			'"scheduled_before": "' + convertTo12HourFormat(serviceTime[0]) + '",';
-		apiBody +=
-			'"scheduled_after": "' + convertTo12HourFormat(serviceTime[0]) + '",';
-		apiBody += '"location_type": "' + app_job_location_type + '",';
+			'"scheduled_before": "' + subtract1HourToTime(serviceTime[0]) + '",';
+		apiBody += '"scheduled_after": "' + add1HourToTime(serviceTime[0]) + '",';
+		apiBody += '"location_type": "' + app_job_location_type_name + '",';
 		apiBody += '"note": "' + appServiceStopNotes + '",';
 		apiBody += '"run_ns_id": "' + appServiceStopRunPlan + '",';
 		apiBody += '"stop_name": "' + app_job_stop_name + '",';
@@ -705,15 +710,15 @@ define([
 		apiBody += "},";
 		apiBody += '"job_group": {';
 		apiBody += '"ns_id": "' + app_job_group_id2 + '",';
-		apiBody += '"name": "AMPO_8/5/2024",';
+		apiBody += '"name": "' + app_job_group_name + '",';
 		apiBody += '"status": "Scheduled"';
 		apiBody += "}";
-        apiBody += "}]}";
-        
-        log.debug({
-            title: 'apiBody',
-            details: apiBody
-        })
+		apiBody += "}]}";
+
+		log.debug({
+			title: "apiBody",
+			details: apiBody,
+		});
 
 		var apiResponse = https.post({
 			url: "https://app.mailplus.com.au/api/v1/general/ns_jobs",
@@ -758,6 +763,38 @@ define([
 		d.setHours(+dateParts[0]);
 		d.setMinutes(+dateParts[1]);
 		// Return the formatted 12-hour time
+		return d;
+	}
+
+	/**
+	 * @description
+	 * @author Ankith Ravindran (AR)
+	 * @date 10/09/2024
+	 * @param {*} time
+	 * @returns {*}
+	 */
+	function add1HourToTime(time) {
+		var timeParts = time.split(":");
+		var d = new Date();
+		d.setHours(+timeParts[0]);
+		d.setMinutes(+timeParts[1]);
+		d.setHours(d.getHours() + 1);
+		return d;
+	}
+
+	/**
+	 * @description
+	 * @author Ankith Ravindran (AR)
+	 * @date 10/09/2024
+	 * @param {*} time
+	 * @returns {*}
+	 */
+	function subtract1HourToTime(time) {
+		var timeParts = time.split(":");
+		var d = new Date();
+		d.setHours(+timeParts[0]);
+		d.setMinutes(+timeParts[1]);
+		d.setHours(d.getHours() - 1);
 		return d;
 	}
 
