@@ -19,7 +19,8 @@ define([
 	"N/search",
 	"N/record",
 	"N/format",
-], function (moment, task, email, runtime, search, record, format) {
+	"N/https",
+], function (moment, task, email, runtime, search, record, format, https) {
 	var apiHeaders = {};
 	apiHeaders["Content-Type"] = "application/json";
 	apiHeaders["Accept"] = "application/json";
@@ -667,7 +668,7 @@ define([
 		}
 
 		//08:50|300000,08:50|300000,08:50|300000,08:50|300000,08:50|300000,08:50|300000
-		// var stopTimesArray = appServiceStopStopTimes.split(",");
+		var stopTimesArray = appServiceStopStopTimes.split(",");
 		var serviceTime = stopTimesArray[day].split("|");
 
 		app_job_rec.setValue({
@@ -685,7 +686,6 @@ define([
 		});
 
 		var app_job_id = app_job_rec.save();
-		
 
 		var apiBody = '{"jobs": [{';
 		apiBody += '"ns_id": "' + app_job_id + '",';
@@ -727,6 +727,11 @@ define([
 		});
 
 		var parsedAPIResponseBody = JSON.parse(apiResponse.body);
+
+		log.debug({
+			title: "parsedAPIResponseBody",
+			details: parsedAPIResponseBody,
+		});
 
 		return app_job_id;
 	}
