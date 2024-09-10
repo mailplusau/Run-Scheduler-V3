@@ -230,6 +230,7 @@ define([
 					id: appServiceStopCustomer,
 					isDynamic: true,
 				});
+
 				var lineIndex = customerRecord.findSublistLineWithValue({
 					sublistId: "addressbook",
 					fieldId: "internalid",
@@ -671,9 +672,27 @@ define([
 		var stopTimesArray = appServiceStopStopTimes.split(",");
 		var serviceTime = stopTimesArray[day].split("|");
 
+		log.debug({
+			title: "serviceTime[0]",
+			details: serviceTime[0],
+		});
+
+		log.debug({
+			title: "convertTo12HourFormat(serviceTime[0])",
+			details: convertTo12HourFormat(serviceTime[0]),
+		});
+		log.debug({
+			title: "subtractOneHour(serviceTime[0])",
+			details: subtractOneHour(serviceTime[0]),
+		});
+		log.debug({
+			title: "convertTo12HourFormat(serviceTime[0])",
+			details: convertTo12HourFormat(serviceTime[0]),
+		});
+
 		app_job_rec.setValue({
-			fieldId: "custrecord_job_time_scheduled",
-			value: convertTo12HourFormat(serviceTime[0]),
+			fieldId: "addOneHour(serviceTime[0])",
+			value: addOneHour(serviceTime[0]),
 		});
 
 		app_job_rec.setValue({
@@ -689,13 +708,12 @@ define([
 
 		var apiBody = '{"jobs": [{';
 		apiBody += '"ns_id": "' + app_job_id + '",';
-		apiBody += '"e_id": "",';
+		apiBody += '"e_id": "' + app_job_id + '",';
 		apiBody += '"customer_ns_id": "' + appServiceStopCustomer + '",';
 		apiBody +=
 			'"time_scheduled": "' + convertTo12HourFormat(serviceTime[0]) + '",';
-		apiBody +=
-			'"scheduled_before": "' + subtract1HourToTime(serviceTime[0]) + '",';
-		apiBody += '"scheduled_after": "' + add1HourToTime(serviceTime[0]) + '",';
+		apiBody += '"scheduled_before": "' + subtractOneHour(serviceTime[0]) + '",';
+		apiBody += '"scheduled_after": "' + addOneHour(serviceTime[0]) + '",';
 		apiBody += '"location_type": "' + app_job_location_type_name + '",';
 		apiBody += '"note": "' + appServiceStopNotes + '",';
 		apiBody += '"run_ns_id": "' + appServiceStopRunPlan + '",';
@@ -755,20 +773,70 @@ define([
 		);
 	}
 
+	// /**
+	//  * @description
+	//  * @author Ankith Ravindran (AR)
+	//  * @date 02/05/2024
+	//  * @param {*} time24
+	//  * @returns {*}
+	//  */
+	// function convertTo12HourFormat(time24) {
+	// 	var d = new Date();
+	// 	dateParts = time24.split(":");
+	// 	d.setHours(+dateParts[0]);
+	// 	d.setMinutes(+dateParts[1]);
+	// 	// Return the formatted 12-hour time
+	// 	return d;
+	// }
+
 	/**
 	 * @description
 	 * @author Ankith Ravindran (AR)
-	 * @date 02/05/2024
+	 * @date 10/09/2024
 	 * @param {*} time24
 	 * @returns {*}
 	 */
 	function convertTo12HourFormat(time24) {
-		var d = new Date();
-		dateParts = time24.split(":");
-		d.setHours(+dateParts[0]);
-		d.setMinutes(+dateParts[1]);
-		// Return the formatted 12-hour time
-		return d;
+		// Split the time string into hours and minutes
+		var [hours, minutes] = time24.split(":").map(Number);
+
+		// Determine AM or PM suffix
+		var suffix = hours >= 12 ? "PM" : "AM";
+
+		// Convert hours to 12-hour format
+		var hours12 = hours % 12 || 12;
+
+		var newMinutes = minutes.toString();
+		newMinutes = padStart(newMinutes, 2, "0");
+
+		// Return the formatted 12-hour time string
+		return hours12 + ":" + newMinutes + " " + suffix;
+	}
+
+	/**
+	 * @description Adds 1 hour to a 24-hour time string
+	 * @param {string} time24 - The 24-hour time string (e.g., "14:30")
+	 * @returns {string} The new 24-hour formatted time string (e.g., "15:30")
+	 */
+	function addOneHour(time24) {
+		// Split the time string into hours and minutes
+		var [hours, minutes] = time24.split(":").map(Number);
+
+		// Create a new Date object and set the hours and minutes
+		var date = new Date();
+		date.setHours(hours);
+		date.setMinutes(minutes);
+
+		// Add 1 hour to the date
+		date.setHours(date.getHours() + 1);
+
+		// Format the new time as a 24-hour time string
+		var newHours = date.getHours() % 12 || 12;
+		var newMinutes = date.getMinutes().toString();
+		newMinutes = padStart(newMinutes, 2, "0");
+		var suffix = date.getHours() >= 12 ? "PM" : "AM";
+
+		return newHours + ":" + newMinutes + " " + suffix;
 	}
 
 	/**
@@ -785,6 +853,87 @@ define([
 		d.setMinutes(+timeParts[1]);
 		d.setHours(d.getHours() + 1);
 		return d;
+	}
+
+	/**
+	 * @description Adds 1 hour to a 24-hour time string
+	 * @param {string} time24 - The 24-hour time string (e.g., "14:30")
+	 * @returns {string} The new 24-hour formatted time string (e.g., "15:30")
+	 */
+	function subtractOneHour(time24) {
+		// Split the time string into hours and minutes
+		var [hours, minutes] = time24.split(":").map(Number);
+
+		// Create a new Date object and set the hours and minutes
+		var date = new Date();
+		date.setHours(hours);
+		date.setMinutes(minutes);
+
+		// Add 1 hour to the date
+		date.setHours(date.getHours() - 1);
+
+		// Format the new time as a 24-hour time string
+		var newHours = date.getHours() % 12 || 12;
+		var newMinutes = date.getMinutes().toString();
+		newMinutes = padStart(newMinutes, 2, "0");
+		var suffix = date.getHours() >= 12 ? "PM" : "AM";
+
+		return newHours + ":" + newMinutes + " " + suffix;
+	}
+
+	/**
+	 * @description Pads the current string with another string (multiple times, if needed) until the resulting string reaches the given length. The padding is applied from the start (left) of the current string.
+	 * @param {string} str - The original string to pad.
+	 * @param {number} targetLength - The length of the resulting string once the current string has been padded.
+	 * @param {string} padString - The string to pad the current string with. Defaults to a space if not provided.
+	 * @returns {string} The padded string.
+	 */
+	function padStart(str, targetLength, padString) {
+		// Convert the input to a string
+		str = String(str);
+
+		// If the target length is less than or equal to the string's length, return the original string
+		if (str.length >= targetLength) {
+			return str;
+		}
+
+		// Calculate the length of the padding needed
+		var paddingLength = targetLength - str.length;
+
+		// Repeat the padString enough times to cover the padding length
+		var repeatedPadString = repeat(
+			padString,
+			Math.ceil(paddingLength / padString.length)
+		);
+
+		// Slice the repeated padString to the exact padding length needed and concatenate with the original string
+		return repeatedPadString.slice(0, paddingLength) + str;
+	}
+
+	/**
+	 * @description Repeats the given string a specified number of times.
+	 * @param {string} str - The string to repeat.
+	 * @param {number} count - The number of times to repeat the string.
+	 * @returns {string} The repeated string.
+	 */
+	function repeat(str, count) {
+		// Convert the input to a string
+		str = String(str);
+
+		// If the count is 0, return an empty string
+		if (count <= 0) {
+			return "";
+		}
+
+		// Initialize the result string
+		var result = "";
+
+		// Repeat the string by concatenating it to the result
+		for (var i = 0; i < count; i++) {
+			result += str;
+		}
+
+		return result;
 	}
 
 	/**
