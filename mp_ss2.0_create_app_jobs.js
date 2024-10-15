@@ -738,11 +738,21 @@ define([
 			details: apiBody,
 		});
 
-		var apiResponse = https.post({
-			url: "https://app.mailplus.com.au/api/v1/general/ns_jobs",
-			body: apiBody,
-			headers: apiHeaders,
-		});
+		try {
+			var apiResponse = https.post({
+				url: "https://app.mailplus.com.au/api/v1/general/ns_jobs",
+				body: apiBody,
+				headers: apiHeaders,
+			});
+		} catch (error) {
+			if (error.name == "SSS_REQUEST_TIME_EXCEEDED") {
+				var apiResponse = https.post({
+					url: "https://app.mailplus.com.au/api/v1/general/ns_jobs",
+					body: apiBody,
+					headers: apiHeaders,
+				});
+			}
+		}
 
 		var parsedAPIResponseBody = JSON.parse(apiResponse.body);
 
