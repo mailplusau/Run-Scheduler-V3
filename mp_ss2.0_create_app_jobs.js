@@ -744,6 +744,7 @@ define([
 				body: apiBody,
 				headers: apiHeaders,
 			});
+			var parsedAPIResponseBody = JSON.parse(apiResponse.body);
 		} catch (error) {
 			if (error.name == "SSS_REQUEST_TIME_EXCEEDED") {
 				var apiResponse = https.post({
@@ -751,10 +752,9 @@ define([
 					body: apiBody,
 					headers: apiHeaders,
 				});
+				var parsedAPIResponseBody = JSON.parse(apiResponse.body);
 			}
 		}
-
-		var parsedAPIResponseBody = JSON.parse(apiResponse.body);
 
 		log.debug({
 			title: "parsedAPIResponseBody",
