@@ -153,6 +153,10 @@ define([
 			var appServiceStopFranchisee = result.getValue({
 				name: "custrecord_1288_franchisee",
 			});
+			var appServiceStopFranchiseeLocation = result.getValue({
+				name: "location",
+				join: "CUSTRECORD_1288_FRANCHISEE",
+			});
 			var appServiceStopService = result.getValue({
 				name: "custrecord_1288_service",
 			});
@@ -214,236 +218,266 @@ define([
 				title: "appServicePostalLocation",
 				details: appServicePostalLocation,
 			});
+			log.debug({
+				title: "appServiceStopFranchiseeLocation",
+				details: appServiceStopFranchiseeLocation,
+			});
 
-			var service_leg_addr_add1 = null;
-			var service_leg_addr_st_num = null;
-			var service_leg_addr_suburb = null;
-			var service_leg_addr_state = null;
-			var service_leg_addr_postcode = null;
-			var service_leg_addr_lat = null;
-			var service_leg_addr_lon = null;
+			// NetSuite Search:Australia Public Holidays - For Tomorrow
+			var australiaPublicHolidayTomorrowSearch = search.load({
+				id: "customsearch_public_holiday_tomorrow",
+				type: "customrecord_aus_public_holidays_dates",
+			});
 
-			if (!isNullorEmpty(appServiceAddressBook)) {
-				//Load the lead record
-				var customerRecord = record.load({
-					type: record.Type.CUSTOMER,
-					id: appServiceStopCustomer,
-					isDynamic: true,
-				});
+			australiaPublicHolidayTomorrowSearch.filters.push(
+				search.createFilter({
+					name: "custrecord_public_holidays_state",
+					join: "CUSTRECORD_AUS_PUBLIC_HOLIDAY_RECORD",
+					operator: search.Operator.ANYOF,
+					values: appServiceStopFranchiseeLocation,
+				})
+			);
 
-				var lineIndex = customerRecord.findSublistLineWithValue({
-					sublistId: "addressbook",
-					fieldId: "internalid",
-					value: appServiceAddressBook,
-				});
+			var todayIsPublicHolidayCount =
+				australiaPublicHolidayTomorrowSearch.runPaged().count;
 
-				if (lineIndex > -1) {
-					customerRecord.selectLine({
+			log.debug({
+				title: "todayIsPublicHolidayCount",
+				details: todayIsPublicHolidayCount,
+			});
+
+			if (todayIsPublicHolidayCount == 0) {
+
+				var service_leg_addr_add1 = null;
+				var service_leg_addr_st_num = null;
+				var service_leg_addr_suburb = null;
+				var service_leg_addr_state = null;
+				var service_leg_addr_postcode = null;
+				var service_leg_addr_lat = null;
+				var service_leg_addr_lon = null;
+
+				if (!isNullorEmpty(appServiceAddressBook)) {
+					//Load the lead record
+					var customerRecord = record.load({
+						type: record.Type.CUSTOMER,
+						id: appServiceStopCustomer,
+						isDynamic: true,
+					});
+
+					var lineIndex = customerRecord.findSublistLineWithValue({
 						sublistId: "addressbook",
-						line: lineIndex,
+						fieldId: "internalid",
+						value: appServiceAddressBook,
 					});
 
-					var addressSubrecord = customerRecord.getCurrentSublistSubrecord({
-						sublistId: "addressbook",
-						fieldId: "addressbookaddress",
+					if (lineIndex > -1) {
+						customerRecord.selectLine({
+							sublistId: "addressbook",
+							line: lineIndex,
+						});
+
+						var addressSubrecord = customerRecord.getCurrentSublistSubrecord({
+							sublistId: "addressbook",
+							fieldId: "addressbookaddress",
+						});
+
+						service_leg_addr_add1 = addressSubrecord.getValue({
+							fieldId: "addr1",
+						});
+						service_leg_addr_st_num = addressSubrecord.getValue({
+							fieldId: "addr2",
+						});
+						service_leg_addr_suburb = addressSubrecord.getValue({
+							fieldId: "city",
+						});
+						service_leg_addr_state = addressSubrecord.getValue({
+							fieldId: "state",
+						});
+						service_leg_addr_postcode = addressSubrecord.getValue({
+							fieldId: "zip",
+						});
+						service_leg_addr_lat = addressSubrecord.getValue({
+							fieldId: "custrecord_address_lat",
+						});
+						service_leg_addr_lon = addressSubrecord.getValue({
+							fieldId: "custrecord_address_lon",
+						});
+					}
+				}
+
+				if (!isNullorEmpty(appServicePostalLocation)) {
+					var nclRecord = record.load({
+						type: "customrecord_ap_lodgment_location",
+						id: appServicePostalLocation,
 					});
 
-					service_leg_addr_add1 = addressSubrecord.getValue({
-						fieldId: "addr1",
+					service_leg_addr_add1 = nclRecord.getValue({
+						fieldId: "custrecord_ap_lodgement_addr1",
 					});
-					service_leg_addr_st_num = addressSubrecord.getValue({
-						fieldId: "addr2",
+					service_leg_addr_st_num = nclRecord.getValue({
+						fieldId: "custrecord_ap_lodgement_addr2",
 					});
-					service_leg_addr_suburb = addressSubrecord.getValue({
-						fieldId: "city",
+					service_leg_addr_suburb = nclRecord.getValue({
+						fieldId: "custrecord_ap_lodgement_suburb",
 					});
-					service_leg_addr_state = addressSubrecord.getValue({
-						fieldId: "state",
+					service_leg_addr_state = nclRecord.getValue({
+						fieldId: "custrecord_ap_lodgement_site_state",
 					});
-					service_leg_addr_postcode = addressSubrecord.getValue({
-						fieldId: "zip",
+					service_leg_addr_postcode = nclRecord.getValue({
+						fieldId: "custrecord_ap_lodgement_postcode",
 					});
-					service_leg_addr_lat = addressSubrecord.getValue({
-						fieldId: "custrecord_address_lat",
+					service_leg_addr_lat = nclRecord.getValue({
+						fieldId: "custrecord_ap_lodgement_lat",
 					});
-					service_leg_addr_lon = addressSubrecord.getValue({
-						fieldId: "custrecord_address_lon",
+					service_leg_addr_lon = nclRecord.getValue({
+						fieldId: "custrecord_ap_lodgement_long",
 					});
 				}
-			}
 
-			if (!isNullorEmpty(appServicePostalLocation)) {
-				var nclRecord = record.load({
-					type: "customrecord_ap_lodgment_location",
-					id: appServicePostalLocation,
-				});
-
-				service_leg_addr_add1 = nclRecord.getValue({
-					fieldId: "custrecord_ap_lodgement_addr1",
-				});
-				service_leg_addr_st_num = nclRecord.getValue({
-					fieldId: "custrecord_ap_lodgement_addr2",
-				});
-				service_leg_addr_suburb = nclRecord.getValue({
-					fieldId: "custrecord_ap_lodgement_suburb",
-				});
-				service_leg_addr_state = nclRecord.getValue({
-					fieldId: "custrecord_ap_lodgement_site_state",
-				});
-				service_leg_addr_postcode = nclRecord.getValue({
-					fieldId: "custrecord_ap_lodgement_postcode",
-				});
-				service_leg_addr_lat = nclRecord.getValue({
-					fieldId: "custrecord_ap_lodgement_lat",
-				});
-				service_leg_addr_lon = nclRecord.getValue({
-					fieldId: "custrecord_ap_lodgement_long",
-				});
-			}
-
-			// log.debug({
-			//     title: 'service_leg_addr_st_num',
-			//     details: service_leg_addr_st_num
-			// })
-			// log.debug({
-			//     title: 'service_leg_addr_suburb',
-			//     details: service_leg_addr_suburb
-			// })
-			// log.debug({
-			//     title: 'service_leg_addr_state',
-			//     details: service_leg_addr_state
-			// })
-			// log.debug({
-			//     title: 'service_leg_addr_postcode',
-			//     details: service_leg_addr_postcode
-			// })
-			// log.debug({
-			//     title: 'service_leg_addr_lat',
-			//     details: service_leg_addr_lat
-			// })
-			// log.debug({
-			//     title: 'service_leg_addr_lon',
-			//     details: service_leg_addr_lon
-			// })
-
-			log.audit({
-				title: "Main Loop App Job Group Id",
-			});
-			log.audit({
-				title: "app_job_group_id2",
-				details: app_job_group_id2,
-			});
-
-			if (isNullorEmpty(old_service_id)) {
-				//Create App Job Group
-				app_job_group_id2 = createAppJobGroup(
-					appServiceStopServiceText,
-					appServiceStopCustomer,
-					appServiceStopFranchisee,
-					appServiceStopService
-				);
-
-				//Create App Jobs
-				var app_job_id = createAppJobs(
-					appServiceStopCustomer,
-					appServiceStopStopName,
-					appServiceStopService,
-					appServiceStopStopTimes,
-					app_job_group_id2,
-					service_leg_addr_st_num,
-					service_leg_addr_suburb,
-					service_leg_addr_state,
-					service_leg_addr_postcode,
-					service_leg_addr_lat,
-					service_leg_addr_lon,
-					appServiceStopFranchisee,
-					appServiceStopNotes,
-					appServiceStopRunPlan,
-					appServiceStopAddressType,
-					appServiceStopFreq,
-					appServiceStopCustomerText,
-					app_job_group_name
-				);
+				// log.debug({
+				//     title: 'service_leg_addr_st_num',
+				//     details: service_leg_addr_st_num
+				// })
+				// log.debug({
+				//     title: 'service_leg_addr_suburb',
+				//     details: service_leg_addr_suburb
+				// })
+				// log.debug({
+				//     title: 'service_leg_addr_state',
+				//     details: service_leg_addr_state
+				// })
+				// log.debug({
+				//     title: 'service_leg_addr_postcode',
+				//     details: service_leg_addr_postcode
+				// })
+				// log.debug({
+				//     title: 'service_leg_addr_lat',
+				//     details: service_leg_addr_lat
+				// })
+				// log.debug({
+				//     title: 'service_leg_addr_lon',
+				//     details: service_leg_addr_lon
+				// })
 
 				log.audit({
-					title: "Inside Null Old Service Id",
-				});
-				log.audit({
-					title: "app_job_group_id2",
-					details: app_job_group_id2,
-				});
-			} else if (old_service_id == appServiceStopService) {
-				log.audit({
-					title:
-						"Inside Mathcing Old Service Id with App Service Stop Service ID",
+					title: "Main Loop App Job Group Id",
 				});
 				log.audit({
 					title: "app_job_group_id2",
 					details: app_job_group_id2,
 				});
 
-				//Create App Jobs
-				var app_job_id = createAppJobs(
-					appServiceStopCustomer,
-					appServiceStopStopName,
-					appServiceStopService,
-					appServiceStopStopTimes,
-					app_job_group_id2,
-					service_leg_addr_st_num,
-					service_leg_addr_suburb,
-					service_leg_addr_state,
-					service_leg_addr_postcode,
-					service_leg_addr_lat,
-					service_leg_addr_lon,
-					appServiceStopFranchisee,
-					appServiceStopNotes,
-					appServiceStopRunPlan,
-					appServiceStopAddressType,
-					appServiceStopFreq,
-					appServiceStopCustomerText,
-					app_job_group_name
-				);
-			} else if (old_service_id != appServiceStopService) {
-				reschedule = task.create({
-					taskType: task.TaskType.SCHEDULED_SCRIPT,
-					scriptId: "customscript_ss2_create_app_jobs",
-					deploymentId: "customdeploy2",
-					params: null,
-				});
+				if (isNullorEmpty(old_service_id)) {
+					//Create App Job Group
+					app_job_group_id2 = createAppJobGroup(
+						appServiceStopServiceText,
+						appServiceStopCustomer,
+						appServiceStopFranchisee,
+						appServiceStopService
+					);
+
+					//Create App Jobs
+					var app_job_id = createAppJobs(
+						appServiceStopCustomer,
+						appServiceStopStopName,
+						appServiceStopService,
+						appServiceStopStopTimes,
+						app_job_group_id2,
+						service_leg_addr_st_num,
+						service_leg_addr_suburb,
+						service_leg_addr_state,
+						service_leg_addr_postcode,
+						service_leg_addr_lat,
+						service_leg_addr_lon,
+						appServiceStopFranchisee,
+						appServiceStopNotes,
+						appServiceStopRunPlan,
+						appServiceStopAddressType,
+						appServiceStopFreq,
+						appServiceStopCustomerText,
+						app_job_group_name
+					);
+
+					log.audit({
+						title: "Inside Null Old Service Id",
+					});
+					log.audit({
+						title: "app_job_group_id2",
+						details: app_job_group_id2,
+					});
+				} else if (old_service_id == appServiceStopService) {
+					log.audit({
+						title:
+							"Inside Mathcing Old Service Id with App Service Stop Service ID",
+					});
+					log.audit({
+						title: "app_job_group_id2",
+						details: app_job_group_id2,
+					});
+
+					//Create App Jobs
+					var app_job_id = createAppJobs(
+						appServiceStopCustomer,
+						appServiceStopStopName,
+						appServiceStopService,
+						appServiceStopStopTimes,
+						app_job_group_id2,
+						service_leg_addr_st_num,
+						service_leg_addr_suburb,
+						service_leg_addr_state,
+						service_leg_addr_postcode,
+						service_leg_addr_lat,
+						service_leg_addr_lon,
+						appServiceStopFranchisee,
+						appServiceStopNotes,
+						appServiceStopRunPlan,
+						appServiceStopAddressType,
+						appServiceStopFreq,
+						appServiceStopCustomerText,
+						app_job_group_name
+					);
+				} else if (old_service_id != appServiceStopService) {
+					reschedule = task.create({
+						taskType: task.TaskType.SCHEDULED_SCRIPT,
+						scriptId: "customscript_ss2_create_app_jobs",
+						deploymentId: "customdeploy2",
+						params: null,
+					});
+
+					log.audit({
+						title: "Reschedule Return - IN LOOP",
+					});
+					var rescheduled = reschedule.submit();
+
+					log.audit({
+						title: "rescheduled",
+						value: rescheduled,
+					});
+
+					return false;
+				}
 
 				log.audit({
-					title: "Reschedule Return - IN LOOP",
+					title: "Updating the App Service Stop",
 				});
-				var rescheduled = reschedule.submit();
-
 				log.audit({
-					title: "rescheduled",
-					value: rescheduled,
+					title: "appServiceStopInternalId",
+					details: appServiceStopInternalId,
 				});
 
-				return false;
+				//Mark "App Job Created" in the App Service Stop as true
+				var serviceStopRecord = record.load({
+					type: "customrecord_service_stop",
+					id: appServiceStopInternalId,
+				});
+
+				serviceStopRecord.setValue({
+					fieldId: "custrecord_1288_app_job_created",
+					value: true,
+				});
+
+				serviceStopRecord.save();
 			}
-
-			log.audit({
-				title: "Updating the App Service Stop",
-			});
-			log.audit({
-				title: "appServiceStopInternalId",
-				details: appServiceStopInternalId,
-			});
-
-			//Mark "App Job Created" in the App Service Stop as true
-			var serviceStopRecord = record.load({
-				type: "customrecord_service_stop",
-				id: appServiceStopInternalId,
-			});
-
-			serviceStopRecord.setValue({
-				fieldId: "custrecord_1288_app_job_created",
-				value: true,
-			});
-
-			serviceStopRecord.save();
 
 			if (exit == false) {
 				old_service_id = appServiceStopService;
