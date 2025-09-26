@@ -476,7 +476,10 @@ define([
 					value: true,
 				});
 
-				serviceStopRecord.save();
+				serviceStopRecord.save({
+					enableSourcing: false,
+					ignoreMandatoryFields: true,
+				});
 			}
 
 			if (exit == false) {
