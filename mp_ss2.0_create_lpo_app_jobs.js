@@ -199,6 +199,11 @@ define(["SuiteScripts/jQuery Plugins/Moment JS/moment.min",
                 join: "CUSTRECORD_1288_CUSTOMER",
             });
 
+            log.debug({
+                title: "lpoParentCustomerInternalId",
+                details: lpoParentCustomerInternalId,
+            });
+
             // NetSuite Search:Australia Public Holidays - For Tomorrow
             var australiaPublicHolidayTomorrowSearch = search.load({
                 id: "customsearch_public_holiday_tomorrow",
@@ -222,7 +227,7 @@ define(["SuiteScripts/jQuery Plugins/Moment JS/moment.min",
                 details: todayIsPublicHolidayCount,
             });
 
-            if (todayIsPublicHolidayCount == 0) {
+            if (todayIsPublicHolidayCount == 0 && !isNullorEmpty(lpoParentCustomerInternalId)) {
 
                 var service_leg_addr_add1 = null;
                 var service_leg_addr_st_num = null;
