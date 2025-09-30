@@ -284,8 +284,12 @@ define(["SuiteScripts/jQuery Plugins/Moment JS/moment.min",
                     var zeeJSON = JSON.parse(zeeJSONString);
                     zeeJSON.forEach(function (suburb) {
                         if (!isNullorEmpty(suburb.primary_op)) {
-                            for (var i = 0; i < suburb.primary_op.length; i++) {
-                                activeOperator.push(suburb.primary_op[i]);
+                            if (Array.isArray(suburb.primary_op)) {
+                                for (var i = 0; i < suburb.primary_op.length; i++) {
+                                    activeOperator.push(suburb.primary_op[i]);
+                                }
+                            } else {
+                                activeOperator.push(suburb.primary_op);
                             }
                         }
                     });
