@@ -127,10 +127,12 @@ define([
 			break;
 	}
 
+	var app_job_group_name;
+
 	function execute(context) {
 		var old_service_id;
 		var app_job_group_id2;
-		var app_job_group_name;
+		
 
 		var count = 0;
 		var exit = false;
